@@ -168,11 +168,3 @@
      (let [val# (do ~@BODY)]
        (print-summary)
        val#)))
-
-(comment
-  (defn my-add [a b] (+ a b))
-  (defn my-mult [a b] (* a b))
-  (profile-defs my-add my-mult)
-  (profile
-   (my-add (my-mult (rand-int 100000) (rand-int 1000000))
-           (my-mult (rand-int 100000) (rand-int 1000000)))))
