@@ -7,7 +7,6 @@ A Clojure library for profiling.
 This library is available on [Clojars](https://clojars.org/thunknyc.profile):
 
 ![Clojars Project](http://clojars.org/thunknyc.profile/latest-version.svg)
-
 `profile` is a very much a work in progress. Feedback and contributions are
 appreciated.
 
@@ -42,7 +41,7 @@ Profile prints output using `pprint/print-table`; it looks like this:
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Edwin Watkeys
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
