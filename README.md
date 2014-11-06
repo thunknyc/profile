@@ -4,9 +4,9 @@ A Clojure library for profiling.
 
 ## Usage
 
-This library is available on [Clojars](https://clojars.org/thunknyc.profile):
+This library is available on [Clojars](https://clojars.org/thunknyc/profile):
 
-![Clojars Project](http://clojars.org/thunknyc.profile/latest-version.svg)
+![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
 `profile` is a very much a work in progress. Feedback and contributions are
 appreciated.
@@ -26,7 +26,7 @@ appreciated.
          (my-mult (rand-int 100000) (rand-int 1000000))))
 ```
 
-Profile prints output using `pprint/print-table`; it looks like this:
+`profile` prints output using `pprint/print-table`; it looks like this:
 
 ```
 |   :name | :n | :sum | :min | :max | :mad | :mean |
