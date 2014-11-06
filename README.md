@@ -7,6 +7,7 @@ A Clojure library for profiling.
 This library is available on [Clojars](https://clojars.org/thunknyc.profile):
 
 ![Clojars Project](http://clojars.org/thunknyc.profile/latest-version.svg)
+
 `profile` is a very much a work in progress. Feedback and contributions are
 appreciated.
 
