@@ -31,15 +31,15 @@ collected are inspired by
 `profile` prints output using `pprint/print-table`; it looks like this:
 
 ```
-|                  :name | :n | :sum | :min | :max | :mad | :mean |
-|------------------------+----+------+------+------+------+-------|
-|  #'profile.core/my-add |  1 | 22µs | 22µs | 22µs |  0µs |  22µs |
-| #'profile.core/my-mult |  2 | 51µs |  2µs | 49µs | 47µs |  26µs |
+|          :name | :n | :sum | :min | :max | :mad | :mean |
+|----------------+----+------+------+------+------+-------|
+|  #'user/my-add |  1 | 21µs | 21µs | 21µs |  0µs |  21µs |
+| #'user/my-mult |  2 | 48µs |  3µs | 45µs | 42µs |  24µs |
 
 
 |    :stat | :value |
 |----------+--------|
-| :agg-sum |   73µs |
+| :agg-sum |   69µs |
 ```
 
 
