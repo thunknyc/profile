@@ -15,14 +15,13 @@ collected are inspired by
 [`timber`](https://github.com/ptaoussanis/timbre).
 
 ```clojure
-(require '[profile.core :refer [profile
-                                profile-defs
-                                unprofile-defs
-                                toggle-profile-def]])
+(require '[profile.core :refer [profile profile-var profile-vars
+                                unprofile-var unprofile-vars
+                                toggle-profile-var]])
 (defn my-add [a b] (+ a b))
 (defn my-mult [a b] (* a b))
 
-(profile-defs my-add my-mult)
+(profile-vars my-add my-mult)
 
 (profile
  (my-add (my-mult (rand-int 100000) (rand-int 1000000))
@@ -32,14 +31,15 @@ collected are inspired by
 `profile` prints output using `pprint/print-table`; it looks like this:
 
 ```
-|   :name | :n | :sum | :min | :max | :mad | :mean |
-|---------+----+------+------+------+------+-------|
-|  my-add |  1 |  2µs |  2µs |  2µs |  0µs |   2µs |
-| my-mult |  2 |  6µs |  1µs |  5µs |  4µs |   3µs |
+|                  :name | :n | :sum | :min | :max | :mad | :mean |
+|------------------------+----+------+------+------+------+-------|
+|  #'profile.core/my-add |  1 | 22µs | 22µs | 22µs |  0µs |  22µs |
+| #'profile.core/my-mult |  2 | 51µs |  2µs | 49µs | 47µs |  26µs |
+
 
 |    :stat | :value |
 |----------+--------|
-| :agg-sum |    8µs |
+| :agg-sum |   73µs |
 ```
 
 
