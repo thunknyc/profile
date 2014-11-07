@@ -17,7 +17,7 @@
   [session name nanos]
   (swap! @session #(update-in % [name] (fnil conj []) nanos)))
 
-(defn ^:private profile-fn
+(defn profile-fn
   [session f var]
   (with-meta (fn [& args]
                (let [nano-now (System/nanoTime)
