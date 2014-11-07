@@ -49,8 +49,8 @@
 
 (defmacro toggle-profile-var [VAR]
   `(if (profiled? ~VAR)
-     (unprofile-var ~VAR)
-     (profile-var ~VAR)))
+     (and (unprofile-var ~VAR) false)
+     (and (profile-var ~VAR) true)))
 
 
 
