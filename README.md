@@ -8,8 +8,11 @@ This library is available on [Clojars](https://clojars.org/thunknyc/profile):
 
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
-`profile` is a very much a work in progress. Feedback and contributions are
-appreciated.
+`profile` is a very much a work in progress. Feedback and
+contributions are appreciated. The goal of this project is to work
+toward integration into CIDER, the Clojure IDE for Emacs. The stats
+collected are inspired by
+`[timber](https://github.com/ptaoussanis/timbre)`.
 
 ```clojure
 (require '[profile.core :refer [profile
