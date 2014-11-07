@@ -1,89 +1,61 @@
 (ns profile.core)
 
-(defrecord ProfileSession [state])
+(defn profile-session [] (atom {}))
 
-(defn profile-session []
-  (->ProfileSession (atom {})))
-
-(def ^:dynamic *current-session* (profile-session))
+(def ^:dynamic *profile-data* (profile-session))
 
 (defmacro with-session [& BODY]
-  `(binding [*current-session* (profile-session)]
+  `(binding [*profile-data* (profile-session)]
      ~@BODY))
 
-(defn clear-current-session []
-  (reset! (:state *current-session*) {}))
+(defn clear-profile-data []
+  (reset! *profile-data* {}))
 
 
 
-(defn accrue-time
+(defn ^:private accrue-time
   [session name nanos]
-  (swap! (:state @session)
-         #(update-in % [name] (fnil conj []) nanos)))
+  (swap! @session #(update-in % [name] (fnil conj []) nanos)))
 
-(defn profile-fn
-  [session f name]
-  (fn [& args]
-    (let [nano-now (System/nanoTime)
-          val (apply f args)
-          elapsed (- (System/nanoTime) nano-now)]
-      (accrue-time session name elapsed)
-      val)))
-
-(defmacro p
-  "Evaluate `BODY` and accrue time to key `NAME` in current profiling
-  session. "
-  [NAME & BODY]
-  `((profile-fn #'*current-session*
-                (fn []
-                  ~@BODY)
-                (quote ~NAME))))
-
-(defmacro depfn
-  "Define a function "
-  [NAME DOCSTRING? ARGS & BODY]
-  (if (string? DOCSTRING?)
-    `(defn ~NAME ~DOCSTRING? ~ARGS (p ~NAME ~@BODY))
-    (let [BODY (cons ARGS BODY)
-          ARGS DOCSTRING?]
-      `(defn ~NAME ~ARGS (p ~NAME ~@BODY)))))
+(defn ^:private profile-fn
+  [session f var]
+  (with-meta (fn [& args]
+               (let [nano-now (System/nanoTime)
+                     val (apply f args)
+                     elapsed (- (System/nanoTime) nano-now)]
+                 (accrue-time session var elapsed)
+                 val))
+    {::profiled (deref var)}))
 
 (defn profiled? [f]
-  (not (not (:profiled-fn (meta f)))))
+  (::profiled (meta f)))
 
-(defmacro profile-def [NAME]
-  `(if (profiled? ~NAME)
-     true
-     (do (alter-var-root #'~NAME
-                         #(with-meta
-                            (profile-fn #'*current-session* % (quote ~NAME))
-                            {:profiled-fn ~NAME}))
-         true)))
+(defmacro profile-var [VAR]
+  `(if-let [f# (profiled? ~VAR)]
+     f#
+     (alter-var-root (var ~VAR)
+                     #(profile-fn (var *profile-data*) % (var ~VAR)))))
 
-(defmacro profile-defs [& NAMES]
-  (let [FORMS (for [NAME NAMES] `(profile-def ~NAME))]
+(defmacro profile-vars [& VARS]
+  (let [FORMS (for [VAR VARS] `(profile-var ~VAR))]
     `(do ~@FORMS)))
 
-(defmacro unprofile-def [NAME]
-  `(if-let [f# (:profiled-fn (meta ~NAME))]
-     (alter-var-root #'~NAME (fn [_# x#] x#) f#)))
+(defmacro unprofile-var [VAR]
+  `(when-let [f# (profiled? ~VAR)]
+     (alter-var-root (var ~VAR) (fn [_#] f#))))
 
-(defmacro unprofile-defs [& NAMES]
-  (let [FORMS (for [NAME NAMES] `(profile-def ~NAME))]
-    `(do ~@FORMS)))
+(defmacro unprofile-vars [& VARS]
+  `(doseq [VAR# ~VARS] (profile-var VAR#)))
 
-(defmacro toggle-profile-def [NAME]
-  `(if-let [f# (:profiled-fn (meta ~NAME))]
-     (do (alter-var-root #'~NAME
-                         (fn [_# x#] x#) f#)
-         nil)
-     (do (alter-var-root #'~NAME
-                         #(with-meta
-                            (profile-fn #'*current-session* % (quote ~NAME))
-                            {:profiled-fn ~NAME}))
-         true)))
+(defmacro toggle-profile-var [VAR]
+  `(if (profiled? ~VAR)
+     (unprofile-var ~VAR)
+     (profile-var ~VAR)))
 
-(defn entry-stats [entry]
+
+
+(defn ^:private entry-stats
+  [entry]
   (let [[name xs] entry
         n (count xs)
         middle (int (/ n 2))
@@ -100,7 +72,8 @@
      :mad mad
      :xs xs}))
 
-(defn aggregate-stats [stats]
+(defn ^:private aggregate-stats
+  [stats]
   (reduce (fn [agg-stats stat]
             (-> agg-stats
                 (update-in [:agg-sum] (fnil + 0) (:sum stat))
@@ -110,18 +83,18 @@
           stats))
 
 (defn summary
-  ([] (summary *current-session*))
+  ([] (summary *profile-data*))
   ([session]
-     (let [state @(:state session)
+     (let [state @session
            stats (map entry-stats state)
            agg-stats (aggregate-stats stats)]
        {:agg-stats agg-stats :stats stats})))
 
-(defn format-int
+(defn ^:private format-int
   [n]
   (format "%,d" n))
 
-(defn format-nanoseconds
+(defn ^:private format-nanoseconds
   [nanos]
   (cond (> nanos 1000000000)
         (format "%.1fs" (/ nanos 1.0E9))
@@ -130,29 +103,28 @@
         :else
         (format "%.0fµs" (/ nanos 1.0E3))))
 
-(defn format-stats
+(defn ^:private format-stats
   [stats]
   (-> stats
       (update-in [:n] format-int)
-      (update-in [:name] name)
       (update-in [:sum] format-nanoseconds)
       (update-in [:min] format-nanoseconds)
       (update-in [:max] format-nanoseconds)
       (update-in [:mad] format-nanoseconds)
       (update-in [:mean] format-nanoseconds)))
 
-(defn format-agg-stats
+(defn ^:private format-agg-stats
   [agg-stats]
   (-> agg-stats
       (update-in [:agg-sum] (fnil format-nanoseconds 0))))
 
-(defn tableify-agg-stats
+(defn ^:private tableify-agg-stats
   [agg-stats]
   (for [[k v] (format-agg-stats agg-stats)]
     {:stat k :value v}))
 
 (defn print-summary
-  ([] (print-summary *current-session*))
+  ([] (print-summary *profile-data*))
   ([session]
      (let [{:keys [agg-stats stats]} (summary session)
            formatted-stats (map format-stats stats)
