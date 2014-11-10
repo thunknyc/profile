@@ -1,53 +1,103 @@
 (ns profile.core)
 
-(defn profile-session [] (atom {}))
+(defn profile-session
+  "Inititalize profile session with optional maximum sample count."
+  ([max-sample-count]
+     (atom (with-meta {} {::max-sample-count max-sample-count})))
+  ([] (atom {})))
 
 (def ^:dynamic *profile-data* (profile-session))
 
-(defmacro with-session [& BODY]
-  `(binding [*profile-data* (profile-session)]
+(defmacro with-session
+  "Evaluate `BODY` in context of a new profile sassion initializaed
+  with `OPTIONS`, a map that may contain a `:max-sample-count`."
+  [OPTIONS & BODY]
+  `(binding [*profile-data* (profile-session (:max-sample-count OPTIONS))]
      ~@BODY))
 
 (defn clear-profile-data []
   (reset! *profile-data* {}))
 
+(defn max-sample-count
+  "Return maximum sample count of current profile session."
+  []
+  (::max-sample-count (meta (deref *profile-data*))))
+
+(defn set-max-sample-count
+  "Set maximum sample count of current profile session. Maximum sample
+  count refers to the the maximum number of samples any individual
+  name may be associated with. Value is applied when time is accured;
+  this call will not truncate any profile data."
+  [n]
+  (swap! *profile-data* with-meta {::max-sample-count n})
+  n)
+
 
 
-(defn ^:private accrue-time
-  [session name nanos]
-  (swap! @session #(update-in % [name] (fnil conj []) nanos)))
+(defn ^:profile truncate-samples
+  [samples max-sample-count]
+  (if-let [sample-count (count samples)]
+    (if (and max-sample-count (> (inc sample-count) max-sample-count))
+      (subvec samples (- sample-count max-sample-count -1))
+      samples)))
 
-(defn profile-fn
+(defn ^:private accrue-time
+  [session-atom name nanos]
+  (swap! session-atom
+         (fn [session]
+           (let [samples
+                 (truncate-samples (get session name []) (max-sample-count))]
+             (assoc-in session [name] (conj samples nanos))))))
+
+(defn profile-fn*
+  "This function is exported only so the profile-var macro can make
+  use of it."
   [session f var]
   (with-meta (fn [& args]
                (let [nano-now (System/nanoTime)
                      val (apply f args)
                      elapsed (- (System/nanoTime) nano-now)]
-                 (accrue-time session var elapsed)
+                 (accrue-time (deref session) var elapsed)
                  val))
     {::profiled (deref var)}))
 
-(defn profiled? [f]
+(defn profiled?
+  "Reurns a truthy value if `f` is currently profiled."
+  [f]
   (::profiled (meta f)))
 
-(defmacro profile-var [VAR]
+(defmacro profile-var
+  "If `VAR` is not already profiled, wraps the associated value with a
+  function that accrues time to the current profile session."
+  [VAR]
   `(if-let [f# (profiled? ~VAR)]
      f#
      (alter-var-root (var ~VAR)
-                     #(profile-fn (var *profile-data*) % (var ~VAR)))))
+                     #(profile-fn* (var *profile-data*) % (var ~VAR)))))
 
-(defmacro profile-vars [& VARS]
+(defmacro profile-vars
+  "Equivalent to evaluating `profile-var` on each element of `VARS`."
+  [& VARS]
   (let [FORMS (for [VAR VARS] `(profile-var ~VAR))]
     `(do ~@FORMS)))
 
-(defmacro unprofile-var [VAR]
+(defmacro unprofile-var
+  "If `VAR` is profiled, replaces binding with original function."
+  [VAR]
   `(when-let [f# (profiled? ~VAR)]
      (alter-var-root (var ~VAR) (fn [_#] f#))))
 
-(defmacro unprofile-vars [& VARS]
+(defmacro unprofile-vars
+  "Equivalent to evaluating `unprofile-var` on each element of
+  `VARS`."
+  [& VARS]
   `(doseq [VAR# ~VARS] (profile-var VAR#)))
 
-(defmacro toggle-profile-var [VAR]
+(defmacro toggle-profile-var
+  "Profiles or unprofiles `VAR` depending on its current
+  state. Returns a truthy value if `VAR` is profiled subsequent to
+  evaluation of this macro."
+  [VAR]
   `(if (profiled? ~VAR)
      (and (unprofile-var ~VAR) false)
      (and (profile-var ~VAR) true)))
@@ -83,6 +133,10 @@
           stats))
 
 (defn summary
+  "Returns a map containing two keys, `:stats` and `:agg-stats`. The
+  former containts a sequence of maps containing statistics describing
+  the profile data for each profiled name. `:agg-stats` contains a map
+  of statistics relevant to the aggregate of all profiles names."
   ([] (summary *profile-data*))
   ([session]
      (let [state @session
@@ -124,6 +178,8 @@
     {:stat k :value v}))
 
 (defn print-summary
+  "Prints to *err* individual and aggregate statistics for profiled
+  names. "
   ([] (print-summary *profile-data*))
   ([session]
      (binding [*out* *err*]
@@ -136,6 +192,11 @@
          (newline)
          (clojure.pprint/print-table agg-stats-table)))))
 
+(defmacro profile
+  "Execute BODY in a new profile session using `OPTIONS` and print
+  summary of collected profile data to `*err*` using `print-summary`."
+  [OPTIONS & BODY]
+  `(with-session ~OPTIONS
      (let [val# (do ~@BODY)]
        (print-summary)
        val#)))
