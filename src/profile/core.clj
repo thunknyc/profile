@@ -50,7 +50,7 @@
                  (truncate-samples (get session name []) (max-sample-count))]
              (assoc-in session [name] (conj samples nanos))))))
 
-(defn profile-fn*
+(defn ^:no-doc profile-fn*
   "This function is exported only so the profile-var macro can make
   use of it."
   [session f var]
