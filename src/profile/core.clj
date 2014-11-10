@@ -12,7 +12,7 @@
   "Evaluate `BODY` in context of a new profile sassion initializaed
   with `OPTIONS`, a map that may contain a `:max-sample-count`."
   [OPTIONS & BODY]
-  `(binding [*profile-data* (profile-session (:max-sample-count OPTIONS))]
+  `(binding [*profile-data* (profile-session (:max-sample-count ~OPTIONS))]
      ~@BODY))
 
 (defn clear-profile-data []
