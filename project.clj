@@ -1,4 +1,4 @@
-(defproject thunknyc/profile "0.3.0"
+(defproject thunknyc/profile "0.3.1"
   :description "A Clojure profiling library."
   :url "http://github.com/thunknyc/profile"
   :license {:name "Eclipse Public License"
