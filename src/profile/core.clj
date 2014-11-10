@@ -1,4 +1,5 @@
-(ns profile.core)
+(ns profile.core
+  (:require [clojure.pprint :refer [print-table]]))
 
 (defn profile-session
   "Inititalize profile session with optional maximum sample count."
@@ -190,7 +191,7 @@
           [:name :n :sum :min :max :mad :mean]
           formatted-stats)
          (newline)
-         (clojure.pprint/print-table agg-stats-table)))))
+         (print-table agg-stats-table)))))
 
 (defmacro profile
   "Execute BODY in a new profile session using `OPTIONS` and print
