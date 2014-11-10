@@ -35,7 +35,7 @@
 
 
 
-(defn ^:profile truncate-samples
+(defn ^:private truncate-samples
   [samples max-sample-count]
   (if-let [sample-count (count samples)]
     (if (and max-sample-count (> (inc sample-count) max-sample-count))
