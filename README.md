@@ -15,15 +15,13 @@ collected are inspired by
 [`timber`](https://github.com/ptaoussanis/timbre).
 
 ```clojure
-(require '[profile.core :refer [profile profile-var profile-vars
-                                unprofile-var unprofile-vars
-                                toggle-profile-var]])
+(require '[profile.core :refer :all])
 (defn my-add [a b] (+ a b))
 (defn my-mult [a b] (* a b))
 
 (profile-vars my-add my-mult)
 
-(profile
+(profile {}
  (my-add (my-mult (rand-int 100000) (rand-int 1000000))
          (my-mult (rand-int 100000) (rand-int 1000000))))
 ```
