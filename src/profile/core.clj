@@ -126,17 +126,16 @@
 (defn print-summary
   ([] (print-summary *profile-data*))
   ([session]
-     (let [{:keys [agg-stats stats]} (summary session)
-           formatted-stats (map format-stats stats)
-           agg-stats-table (tableify-agg-stats agg-stats)]
-       (clojure.pprint/print-table
-        [:name :n :sum :min :max :mad :mean]
-        formatted-stats)
-       (newline)
-       (clojure.pprint/print-table agg-stats-table))))
+     (binding [*out* *err*]
+       (let [{:keys [agg-stats stats]} (summary session)
+             formatted-stats (map format-stats stats)
+             agg-stats-table (tableify-agg-stats agg-stats)]
+         (clojure.pprint/print-table
+          [:name :n :sum :min :max :mad :mean]
+          formatted-stats)
+         (newline)
+         (clojure.pprint/print-table agg-stats-table)))))
 
-(defmacro profile [& BODY]
-  `(with-session
      (let [val# (do ~@BODY)]
        (print-summary)
        val#)))
