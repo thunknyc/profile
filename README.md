@@ -26,7 +26,8 @@ collected are inspired by
          (my-mult (rand-int 100000) (rand-int 1000000))))
 ```
 
-`profile` prints output using `pprint/print-table`; it looks like this:
+`profile` prints output to `*err*` using `pprint/print-table`; it
+looks like this:
 
 ```
 |          :name | :n | :sum | :min | :max | :mad | :mean |
