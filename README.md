@@ -14,6 +14,28 @@ toward integration into CIDER, the Clojure IDE for Emacs. The stats
 collected are inspired by
 [`timber`](https://github.com/ptaoussanis/timbre).
 
+After writing `profile`, I was puttering around CrossClj, I came
+across Stuart Sierra's circa 2009 `core.contrib.profile` library. He
+made some different decisions than I did in his implementation,
+notably:
+
+* Sierra's library is written to reduce to a nop unless an earmuffed
+  var evaluates to true. This library always incurs profiling overhead
+  for any profiled var.
+
+* Sierra's library does not keep sample data but instead reduces the
+  incoming sample data with each traced invocation. This library does,
+  so that it can compute mean average deviation on an optionally
+  rolling sample of the most recent invocations for a given var.
+
+* Sierra's library allows arbitrary bodies of code to be
+  profiled. This library only profiles functions bound to vars.
+
+These differences are due in large part because `thunknyc/profile` is
+intended to be used interactively in an IDE. Also, its API is modelled
+on `clojure.org/tools.trace`, which focuses on tracing (and
+un-tracing) vars.
+
 ```clojure
 (require '[profile.core :refer :all])
 (defn my-add [a b] (+ a b))
