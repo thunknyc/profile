@@ -128,14 +128,21 @@ looks like this:
   [& VARS]
   `(doseq [VAR# ~VARS] (profile-var VAR#)))
 
+(defn toggle-profile-var*
+  "For use by cider-nrepl."
+  [v]
+  (if-let [f (profiled? @v)]
+    (do (alter-var-root v (fn [_] f))
+        false)
+    (do (alter-var-root v #(profile-fn* (var *profile-data*) % v))
+        true)))
+
 (defmacro toggle-profile-var
   "Profiles or unprofiles `VAR` depending on its current
   state. Returns a truthy value if `VAR` is profiled subsequent to
   evaluation of this macro."
   [VAR]
-  `(if (profiled? ~VAR)
-     (and (unprofile-var ~VAR) false)
-     (and (profile-var ~VAR) true)))
+  `(toggle-profile-var* (var ~VAR)))
 
 
 
