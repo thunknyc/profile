@@ -10,6 +10,8 @@ dependency for the most recently released version:
 
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
+## Introduction
+
 The goal of this project is to work toward integration into CIDER, the
 Clojure IDE for Emacs. The stats collected are inspired by
 [`timber`](https://github.com/ptaoussanis/timbre). Full [API
@@ -36,6 +38,8 @@ These differences are due in large part because `thunknyc/profile` is
 intended to be used interactively in an IDE. Also, its API is modelled
 on `clojure.org/tools.trace`, which focuses on tracing (and
 un-tracing) vars.
+
+## Example
 
 ```clojure
 (require '[profile.core :refer :all])
