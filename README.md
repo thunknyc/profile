@@ -8,10 +8,8 @@ This library is available on [Clojars](https://clojars.org/thunknyc/profile):
 
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
-`profile` is a very much a work in progress. Feedback and
-contributions are appreciated. The goal of this project is to work
-toward integration into CIDER, the Clojure IDE for Emacs. The stats
-collected are inspired by
+The goal of this project is to work toward integration into CIDER, the
+Clojure IDE for Emacs. The stats collected are inspired by
 [`timber`](https://github.com/ptaoussanis/timbre).
 
 After writing `profile`, I was puttering around CrossClj, I came
@@ -62,7 +60,6 @@ looks like this:
 |----------+--------|
 | :agg-sum |   69µs |
 ```
-
 
 ## License
 
