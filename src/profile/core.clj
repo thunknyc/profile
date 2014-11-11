@@ -32,11 +32,13 @@ looks like this:
 "
   (:require [clojure.pprint :refer [print-table]]))
 
+(defn default-max-sample-count 10000)
+
 (defn profile-session
   "Inititalize profile session with optional maximum sample count."
   ([max-sample-count]
      (atom (with-meta {} {::max-sample-count max-sample-count})))
-  ([] (atom {})))
+  ([] (profile-session default-max-sample-count)))
 
 (def ^:dynamic *profile-data* (profile-session))
 
