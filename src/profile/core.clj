@@ -1,4 +1,35 @@
 (ns profile.core
+"A Clojure library for profiling.
+
+## Example
+
+```clojure
+(require '[profile.core :refer :all])
+(defn my-add [a b] (+ a b))
+(defn my-mult [a b] (* a b))
+
+(profile-vars my-add my-mult)
+
+(profile {}
+ (my-add (my-mult (rand-int 100000) (rand-int 1000000))
+         (my-mult (rand-int 100000) (rand-int 1000000))))
+```
+
+`profile` prints output to `*err*` using `pprint/print-table`; it
+looks like this:
+
+```
+|          :name | :n | :sum | :min | :max | :mad | :mean |
+|----------------+----+------+------+------+------+-------|
+|  #'user/my-add |  1 | 21µs | 21µs | 21µs |  0µs |  21µs |
+| #'user/my-mult |  2 | 48µs |  3µs | 45µs | 42µs |  24µs |
+
+
+|    :stat | :value |
+|----------+--------|
+| :agg-sum |   69µs |
+```
+"
   (:require [clojure.pprint :refer [print-table]]))
 
 (defn profile-session
