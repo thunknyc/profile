@@ -4,13 +4,16 @@ A Clojure library for profiling.
 
 ## Usage
 
-This library is available on [Clojars](https://clojars.org/thunknyc/profile):
+This library is available on
+[Clojars](https://clojars.org/thunknyc/profile); here is the Leiningen
+dependency for the most recently released version:
 
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
 The goal of this project is to work toward integration into CIDER, the
 Clojure IDE for Emacs. The stats collected are inspired by
-[`timber`](https://github.com/ptaoussanis/timbre).
+[`timber`](https://github.com/ptaoussanis/timbre). Full [API
+documentation](http://thunknyc.github.io/profile/) is available.
 
 After writing `profile`, I was puttering around CrossClj, I came
 across Stuart Sierra's circa 2009 `core.contrib.profile` library. He
