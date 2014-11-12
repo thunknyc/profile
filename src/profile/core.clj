@@ -44,11 +44,11 @@ looks like this:
 (def ^:dynamic *profile-data* (profile-session))
 
 (defmacro with-session
-  "Evaluate `BODY` in context of a new profile sassion initializaed
-  with `OPTIONS`, a map that may contain a `:max-sample-count`."
-  [OPTIONS & BODY]
-  `(binding [*profile-data* (profile-session (:max-sample-count ~OPTIONS))]
-     ~@BODY))
+  "Evaluate `body` in context of a new profile sassion initializaed
+  with `options`, a map that may contain a `:max-sample-count`."
+  [options & body]
+  `(binding [*profile-data* (profile-session (:max-sample-count ~options))]
+     ~@body))
 
 (defn clear-profile-data []
   (reset! *profile-data* {}))
@@ -66,8 +66,6 @@ looks like this:
   [n]
   (swap! *profile-data* with-meta {::max-sample-count n})
   n)
-
-
 
 (defn ^:private truncate-samples
   [samples max-sample-count]
@@ -102,31 +100,31 @@ looks like this:
   (::profiled (meta f)))
 
 (defmacro profile-var
-  "If `VAR` is not already profiled, wraps the associated value with a
+  "If `var` is not already profiled, wraps the associated value with a
   function that accrues time to the current profile session."
-  [VAR]
-  `(if-let [f# (profiled? ~VAR)]
+  [var]
+  `(if-let [f# (profiled? ~var)]
      f#
-     (alter-var-root (var ~VAR)
-                     #(profile-fn* (var *profile-data*) % (var ~VAR)))))
+     (alter-var-root (var ~var)
+                     #(profile-fn* (var *profile-data*) % (var ~var)))))
 
 (defmacro profile-vars
-  "Equivalent to evaluating `profile-var` on each element of `VARS`."
-  [& VARS]
-  (let [FORMS (for [VAR VARS] `(profile-var ~VAR))]
-    `(do ~@FORMS)))
+  "Equivalent to evaluating `profile-var` on each element of `vars`."
+  [& vars]
+  (let [forms (for [var vars] `(profile-var ~var))]
+    `(do ~@forms)))
 
 (defmacro unprofile-var
-  "If `VAR` is profiled, replaces binding with original function."
-  [VAR]
-  `(when-let [f# (profiled? ~VAR)]
-     (alter-var-root (var ~VAR) (fn [_#] f#))))
+  "If `var` is profiled, replaces binding with original function."
+  [var]
+  `(when-let [f# (profiled? ~var)]
+     (alter-var-root (var ~var) (fn [_#] f#))))
 
 (defmacro unprofile-vars
   "Equivalent to evaluating `unprofile-var` on each element of
-  `VARS`."
-  [& VARS]
-  `(doseq [VAR# ~VARS] (profile-var VAR#)))
+  `vars`."
+  [& vars]
+  `(doseq [var# ~vars] (profile-var var#)))
 
 (defn toggle-profile-var*
   "For use by cider-nrepl."
@@ -138,13 +136,11 @@ looks like this:
         true)))
 
 (defmacro toggle-profile-var
-  "Profiles or unprofiles `VAR` depending on its current
-  state. Returns a truthy value if `VAR` is profiled subsequent to
+  "Profiles or unprofiles `var` depending on its current
+  state. Returns a truthy value if `var` is profiled subsequent to
   evaluation of this macro."
-  [VAR]
-  `(toggle-profile-var* (var ~VAR)))
-
-
+  [var]
+  `(toggle-profile-var* (var ~var)))
 
 (defn ^:private entry-stats
   [entry]
@@ -235,10 +231,10 @@ looks like this:
          (print-table agg-stats-table)))))
 
 (defmacro profile
-  "Execute BODY in a new profile session using `OPTIONS` and print
+  "Execute body in a new profile session using `options` and print
   summary of collected profile data to `*err*` using `print-summary`."
-  [OPTIONS & BODY]
-  `(with-session ~OPTIONS
-     (let [val# (do ~@BODY)]
+  [options & body]
+  `(with-session ~options
+     (let [val# (do ~@body)]
        (print-summary)
        val#)))
