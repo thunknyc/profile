@@ -19,15 +19,15 @@
 looks like this:
 
 ```
-|          :name | :n | :sum | :min | :max | :mad | :mean |
-|----------------+----+------+------+------+------+-------|
-|  #'user/my-add |  1 | 21µs | 21µs | 21µs |  0µs |  21µs |
-| #'user/my-mult |  2 | 48µs |  3µs | 45µs | 42µs |  24µs |
+|          :name | :n | :sum | :q1 | :med | :q3 | :sd | :mad |
+|----------------+----+------+-----+------+-----+-----+------|
+|  #'user/my-add |  1 |  2µs | 2µs |  2µs | 2µs | 0µs |  0µs |
+| #'user/my-mult |  2 | 11µs | 3µs |  8µs | 3µs | 3µs |  5µs |
 
 
 |    :stat | :value |
 |----------+--------|
-| :agg-sum |   69µs |
+| :agg-sum |   13µs |
 ```
 "
   (:require [clojure.pprint :refer [print-table]]))
@@ -151,17 +151,25 @@ looks like this:
   (let [[name xs] entry
         n (count xs)
         middle (int (/ n 2))
+        q1-index (int (* n 0.25))
+        q3-index (max 0 (dec (int (* n 0.75))))
         sum (reduce + 0 xs)
-        median (get (vec (sort xs)) middle)
-        mad (get (vec (sort (map #(Math/abs (- median %)) xs))) middle)]
+        xs-sorted (vec (sort xs))
+        median (get xs-sorted middle)
+        mean (double (/ sum n))
+        mad (get (vec (sort (map #(Math/abs (- median %)) xs))) middle)
+        variance (/ (reduce + 0 (map #(Math/pow (- mean %) 2.0) xs)) n)]
     {:name name
      :n n
      :sum sum
      :min (apply min xs)
      :max (apply max xs)
-     :mean (double (/ sum n))
-     :median median
+     :mean mean
+     :med median
      :mad mad
+     :q1 (get xs-sorted q1-index)
+     :q3 (get xs-sorted q3-index)
+     :sd (Math/sqrt variance)
      :xs xs}))
 
 (defn ^:private aggregate-stats
@@ -207,7 +215,11 @@ looks like this:
       (update-in [:min] format-nanoseconds)
       (update-in [:max] format-nanoseconds)
       (update-in [:mad] format-nanoseconds)
-      (update-in [:mean] format-nanoseconds)))
+      (update-in [:q1] format-nanoseconds)
+      (update-in [:med] format-nanoseconds)
+      (update-in [:q3] format-nanoseconds)
+      (update-in [:mean] format-nanoseconds)
+      (update-in [:sd] format-nanoseconds)))
 
 (defn ^:private format-agg-stats
   [agg-stats]
@@ -224,15 +236,15 @@ looks like this:
   names. "
   ([] (print-summary *profile-data*))
   ([session]
-     (binding [*out* *err*]
-       (let [{:keys [agg-stats stats]} (summary session)
-             formatted-stats (map format-stats stats)
-             agg-stats-table (tableify-agg-stats agg-stats)]
-         (clojure.pprint/print-table
-          [:name :n :sum :min :max :mad :mean]
-          formatted-stats)
-         (newline)
-         (print-table agg-stats-table)))))
+     (binding [*out* *err*])
+     (let [{:keys [agg-stats stats]} (summary session)
+           formatted-stats (map format-stats stats)
+           agg-stats-table (tableify-agg-stats agg-stats)]
+       (clojure.pprint/print-table
+        [:name :n :sum :q1 :med :q3 :sd :mad]
+        formatted-stats)
+       (newline)
+       (print-table agg-stats-table))))
 
 (defmacro profile
   "Execute BODY in a new profile session using `OPTIONS` and print

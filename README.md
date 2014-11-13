@@ -13,9 +13,19 @@ dependency for the most recently released version:
 ## Introduction
 
 The goal of this project is to work toward integration into CIDER, the
-Clojure IDE for Emacs. The stats collected are inspired by
-[`timber`](https://github.com/ptaoussanis/timbre). Full [API
-documentation](http://thunknyc.github.io/profile/) is available.
+Clojure IDE for Emacs. The stats collected are the as follows:
+
+* `:n` Number of samples.
+* `:sum` Aggregate time spent in fn.
+* `:q1` First quartile i.e. twenty-fifth percentile.
+* `:med` Median i.e. fiftieth percentile.
+* `:q3` Third quartile i.e. seventy-fifth percentile.
+* `:sd` Standard deviation i.e. the square root of the sum of squares
+  of differences from the mean.
+* `:mad` Mean average deviation, I don't feel like looking up the
+  definition just now.
+
+Full [API documentation](http://thunknyc.github.io/profile/) is available.
 
 After writing `profile`, I was puttering around CrossClj, I came
 across Stuart Sierra's circa 2009 `core.contrib.profile` library. He
@@ -39,6 +49,14 @@ intended to be used interactively in an IDE. Also, its API is modelled
 on `clojure.org/tools.trace`, which focuses on tracing (and
 un-tracing) vars.
 
+People have mentioned Criterium. Criterium looks great! Definitely use
+it if it works for you. That said, it doesn't work well for
+non-idempotent, non-referentially transparent profiling. I wrote this
+library primarily to assist in understanding the performance
+characteristics of code that is highly dependent on interactions
+outside the JVM, for example due to HTTP requests, database queries,
+sending pub-sub messages, things like those.
+
 ## Example
 
 ```clojure
@@ -57,15 +75,15 @@ un-tracing) vars.
 looks like this:
 
 ```
-|          :name | :n | :sum | :min | :max | :mad | :mean |
-|----------------+----+------+------+------+------+-------|
-|  #'user/my-add |  1 | 21µs | 21µs | 21µs |  0µs |  21µs |
-| #'user/my-mult |  2 | 48µs |  3µs | 45µs | 42µs |  24µs |
+|          :name | :n | :sum | :q1 | :med | :q3 | :sd | :mad |
+|----------------+----+------+-----+------+-----+-----+------|
+|  #'user/my-add |  1 |  2µs | 2µs |  2µs | 2µs | 0µs |  0µs |
+| #'user/my-mult |  2 | 11µs | 3µs |  8µs | 3µs | 3µs |  5µs |
 
 
 |    :stat | :value |
 |----------+--------|
-| :agg-sum |   69µs |
+| :agg-sum |   13µs |
 ```
 
 ## License
