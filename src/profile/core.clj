@@ -32,7 +32,7 @@ looks like this:
 "
   (:require [clojure.pprint :refer [print-table]]))
 
-(def ^:private default-max-sample-count 10000)
+(def ^:private default-max-sample-count 50000)
 
 (defn profile-session
   "Inititalize profile session with optional maximum sample
