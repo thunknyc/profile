@@ -237,9 +237,8 @@ looks like this:
   ([] (print-summary *profile-data*))
   ([session]
      (binding [*out* *err*])
-     (let [{:keys [agg-stats stats]} (summary session)
-           formatted-stats (map format-stats stats)
-           agg-stats-table (tableify-agg-stats agg-stats)]
+     (let [{:keys [stats]} (summary session)
+           formatted-stats (map format-stats stats)]
        (clojure.pprint/print-table
         [:name :n :sum :q1 :med :q3 :sd :mad]
         formatted-stats))))
