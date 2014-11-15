@@ -92,7 +92,7 @@ looks like this:
     {::profiled (deref var)}))
 
 (defn profiled?
-  "Reurns a truthy value if `f` is currently profiled."
+  "Reurns a true value if `f` is currently profiled."
   [f]
   (::profiled (meta f)))
 
@@ -147,7 +147,7 @@ looks like this:
 
 (defmacro toggle-profile-var
   "Profiles or unprofiles `VAR` depending on its current
-  state. Returns a truthy value if `VAR` is profiled subsequent to
+  state. Returns a true value if `VAR` is profiled subsequent to
   evaluation of this macro."
   [VAR]
   `(toggle-profile-var* (var ~VAR)))
@@ -158,20 +158,23 @@ looks like this:
   "Equivalent to evaluating `profile-var*` on each function-containing
   var is `ns`. If `include-private?` is present and true, profile
   functions associated with private vars in addition to public vars,
-  otherwise profile only public functions."
+  otherwise profile only public functions. Returns true value."
   ([ns] (profile-ns ns false))
   ([ns include-private?]
      (let [varmap (if include-private? (ns-interns ns) (ns-publics ns))
            function-vars (function-vars varmap)]
        (doseq [var function-vars]
-         (profile-var* var)))))
+         (profile-var* var))
+       true)))
 
 (defn unprofile-ns
   "Equivalent to evaluating `unprofile-var*` on each
-  function-containing var in `ns`, whether public or private."
+  function-containing var in `ns`, whether public or private. Returns
+  not-true value."
   [ns]
   (doseq [var (function-vars (ns-interns ns))]
-    (unprofile-var* var)))
+    (unprofile-var* var))
+  nil)
 
 (defn ^:private ns-some-profiled?
   [ns]
@@ -183,8 +186,9 @@ looks like this:
   "If any vars in `ns` are profiled, unprofile all vars in `ns`,
   regardless whether public or private. If no vars in `ns` are
   profiled, profiles each public (and private, if `include-private?`
-  is present and true) function-containing var."
-  ([ns] (toggle-profile-ns false))
+  is present and true) function-containing var. Returns true value if
+  namespace is profiled."
+  ([ns] (toggle-profile-ns ns false))
   ([ns include-private?]
      (if (ns-some-profiled? ns)
        (unprofile-ns ns)
