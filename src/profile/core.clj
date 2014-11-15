@@ -96,14 +96,18 @@ looks like this:
   [f]
   (::profiled (meta f)))
 
+(defn profile-var*
+  "Given a var value, profile it if it is not already profiled."
+  [var]
+  (if-let [f# (profiled? @var)]
+     f#
+     (alter-var-root var #(profile-fn* (var *profile-data*) % var))))
+
 (defmacro profile-var
   "If `VAR` is not already profiled, wraps the associated value with a
   function that accrues time to the current profile session."
   [VAR]
-  `(if-let [f# (profiled? ~VAR)]
-     f#
-     (alter-var-root (var ~VAR)
-                     #(profile-fn* (var *profile-data*) % (var ~VAR)))))
+  `(profile-var* #'~VAR))
 
 (defmacro profile-vars
   "Equivalent to evaluating `profile-var` on each element of `VARS`."
@@ -111,11 +115,20 @@ looks like this:
   (let [FORMS (for [VAR VARS] `(profile-var ~VAR))]
     `(do ~@FORMS)))
 
+(defn ^:private function-vars [varmap]
+  (->> (filter (fn [[_ bound]] fn? @bound) varmap)
+       (map second)))
+
+(defn unprofile-var*
+  "Given a var value, unprofile it if it is profiled."
+  [var]
+  (when-let [f# (profiled? @var)]
+     (alter-var-root var (fn [_#] f#))))
+
 (defmacro unprofile-var
   "If `VAR` is profiled, replaces binding with original function."
   [VAR]
-  `(when-let [f# (profiled? ~VAR)]
-     (alter-var-root (var ~VAR) (fn [_#] f#))))
+  `(unprofile-var* #'~VAR))
 
 (defmacro unprofile-vars
   "Equivalent to evaluating `unprofile-var` on each element of
@@ -138,6 +151,44 @@ looks like this:
   evaluation of this macro."
   [VAR]
   `(toggle-profile-var* (var ~VAR)))
+
+
+
+(defn profile-ns
+  "Equivalent to evaluating `profile-var*` on each function-containing
+  var is `ns`. If `include-private?` is present and true, profile
+  functions associated with private vars in addition to public vars,
+  otherwise profile only public functions."
+  ([ns] (profile-ns ns false))
+  ([ns include-private?]
+     (let [varmap (if include-private? (ns-interns ns) (ns-publics ns))
+           function-vars (function-vars varmap)]
+       (doseq [var function-vars]
+         (profile-var* var)))))
+
+(defn unprofile-ns
+  "Equivalent to evaluating `unprofile-var*` on each
+  function-containing var in `ns`, whether public or private."
+  [ns]
+  (doseq [var (function-vars (ns-interns ns))]
+    (unprofile-var* var)))
+
+(defn ^:private ns-some-profiled?
+  [ns]
+  (->> (ns-interns ns)
+       (map (comp deref second))
+       (some profiled?)))
+
+(defn toggle-profile-ns
+  "If any vars in `ns` are profiled, unprofile all vars in `ns`,
+  regardless whether public or private. If no vars in `ns` are
+  profiled, profiles each public (and private, if `include-private?`
+  is present and true) function-containing var."
+  ([ns] (toggle-profile-ns false))
+  ([ns include-private?]
+     (if (ns-some-profiled? ns)
+       (unprofile-ns ns)
+       (profile-ns ns include-private?))))
 
 
 
