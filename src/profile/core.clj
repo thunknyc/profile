@@ -23,11 +23,6 @@ looks like this:
 |----------------+----+------+-----+------+-----+-----+------|
 |  #'user/my-add |  1 |  2µs | 2µs |  2µs | 2µs | 0µs |  0µs |
 | #'user/my-mult |  2 | 11µs | 3µs |  8µs | 3µs | 3µs |  5µs |
-
-
-|    :stat | :value |
-|----------+--------|
-| :agg-sum |   13µs |
 ```
 "
   (:require [clojure.pprint :refer [print-table]]))
@@ -232,8 +227,7 @@ looks like this:
     {:stat k :value v}))
 
 (defn print-summary
-  "Prints to *err* individual and aggregate statistics for profiled
-  names. "
+  "Prints to *err* statistics for profiled names."
   ([] (print-summary *profile-data*))
   ([session]
      (binding [*out* *err*])
