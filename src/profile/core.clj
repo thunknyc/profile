@@ -242,9 +242,7 @@ looks like this:
            agg-stats-table (tableify-agg-stats agg-stats)]
        (clojure.pprint/print-table
         [:name :n :sum :q1 :med :q3 :sd :mad]
-        formatted-stats)
-       (newline)
-       (print-table agg-stats-table))))
+        formatted-stats))))
 
 (defmacro profile
   "Execute BODY in a new profile session using `OPTIONS` and print
