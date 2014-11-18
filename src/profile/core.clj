@@ -29,6 +29,8 @@ looks like this:
 
 (def ^:private default-max-sample-count 50000)
 
+(def ^:private stats-to-print [:n :sum :q1 :med :q3 :sd :mad])
+
 (defn profile-session
   "Inititalize profile session with optional maximum sample
   count. Default maximum sample count is 10,000."
@@ -193,30 +195,30 @@ looks like this:
 
 
 (defn ^:private entry-stats
-  [entry]
-  (let [[name xs] entry
-        n (count xs)
-        middle (int (/ n 2))
-        q1-index (int (* n 0.25))
-        q3-index (max 0 (dec (int (* n 0.75))))
-        sum (reduce + 0 xs)
-        xs-sorted (vec (sort xs))
-        median (get xs-sorted middle)
-        mean (double (/ sum n))
-        mad (get (vec (sort (map #(Math/abs (- median %)) xs))) middle)
-        variance (/ (reduce + 0 (map #(Math/pow (- mean %) 2.0) xs)) n)]
-    {:name name
-     :n n
-     :sum sum
-     :min (apply min xs)
-     :max (apply max xs)
-     :mean mean
-     :med median
-     :mad mad
-     :q1 (get xs-sorted q1-index)
-     :q3 (get xs-sorted q3-index)
-     :sd (Math/sqrt variance)
-     :xs xs}))
+  [[name xs]]
+  (when xs
+    (let [n (count xs)
+          middle (int (/ n 2))
+          q1-index (int (* n 0.25))
+          q3-index (max 0 (dec (int (* n 0.75))))
+          sum (reduce + 0 xs)
+          xs-sorted (vec (sort xs))
+          median (get xs-sorted middle)
+          mean (double (/ sum n))
+          mad (get (vec (sort (map #(Math/abs (- median %)) xs))) middle)
+          variance (/ (reduce + 0 (map #(Math/pow (- mean %) 2.0) xs)) n)]
+      {:name name
+       :n n
+       :sum sum
+       :min (apply min xs)
+       :max (apply max xs)
+       :mean mean
+       :med median
+       :mad mad
+       :q1 (get xs-sorted q1-index)
+       :q3 (get xs-sorted q3-index)
+       :sd (Math/sqrt variance)
+       :xs xs})))
 
 (defn ^:private aggregate-stats
   [stats]
@@ -255,17 +257,18 @@ looks like this:
 
 (defn ^:private format-stats
   [stats]
-  (-> stats
-      (update-in [:n] format-int)
-      (update-in [:sum] format-nanoseconds)
-      (update-in [:min] format-nanoseconds)
-      (update-in [:max] format-nanoseconds)
-      (update-in [:mad] format-nanoseconds)
-      (update-in [:q1] format-nanoseconds)
-      (update-in [:med] format-nanoseconds)
-      (update-in [:q3] format-nanoseconds)
-      (update-in [:mean] format-nanoseconds)
-      (update-in [:sd] format-nanoseconds)))
+  (when stats
+    (-> stats
+        (update-in [:n] format-int)
+        (update-in [:sum] format-nanoseconds)
+        (update-in [:min] format-nanoseconds)
+        (update-in [:max] format-nanoseconds)
+        (update-in [:mad] format-nanoseconds)
+        (update-in [:q1] format-nanoseconds)
+        (update-in [:med] format-nanoseconds)
+        (update-in [:q3] format-nanoseconds)
+        (update-in [:mean] format-nanoseconds)
+        (update-in [:sd] format-nanoseconds))))
 
 (defn ^:private format-agg-stats
   [agg-stats]
@@ -278,15 +281,34 @@ looks like this:
     {:stat k :value v}))
 
 (defn print-summary
-  "Prints to *err* statistics for profiled names."
+  "Prints to *err* statistics for profiled names. Returns nil."
   ([] (print-summary *profile-data*))
   ([session]
-     (binding [*out* *err*])
-     (let [{:keys [stats]} (summary session)
-           formatted-stats (map format-stats stats)]
-       (clojure.pprint/print-table
-        [:name :n :sum :q1 :med :q3 :sd :mad]
-        formatted-stats))))
+     (binding [*out* *err*]
+       (let [{:keys [stats]} (summary session)
+             formatted-stats (map format-stats stats)]
+         (clojure.pprint/print-table
+          (concat [:name] stats-to-print)
+          formatted-stats)))))
+
+(defn ^:private tableify-entry-stats
+  [stats]
+  (for [stat stats-to-print
+        :let [value (stat (format-stats stats))]]
+    {name stat :value value}))
+
+(defn print-entry-summary
+  "Prints a table of profiling statistics to `*err*` for var with
+  `name` if present. Returns nul."
+  ([name] (print-entry-summary *profile-data* name))
+  ([session name]
+     (when-let [samples (get @session name)]
+       (let [table (-> (clojure.lang.MapEntry. name samples)
+                       entry-stats
+                       (dissoc :name :xs)
+                       tableify-entry-stats)]
+         (binding [*out* *err*]
+           (clojure.pprint/print-table [name :value] table))))))
 
 (defmacro profile
   "Execute body in a new profile session using `options` and print
