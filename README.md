@@ -11,7 +11,7 @@ dependency for the most recently released version:
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
 If you use CIDER in Emacs, check out
-[nrepl-profile](http://github.com/thunknyc/nrepl-profile, a project
+[nrepl-profile](http://github.com/thunknyc/nrepl-profile), a project
 that provides nREPL middleware that takes advantage of this
 project. (The Emacs portions of the nrepl-profile are available in
 MELPA as [`cider-profile`](http://melpa.org/#/cider-profile).
