@@ -295,7 +295,7 @@ looks like this:
   [stats]
   (for [stat stats-to-print
         :let [value (stat (format-stats stats))]]
-    {name stat :value value}))
+    {:stat stat :value value}))
 
 (defn print-entry-summary
   "Prints a table of profiling statistics to `*err*` for var with
@@ -308,7 +308,8 @@ looks like this:
                        (dissoc :name :xs)
                        tableify-entry-stats)]
          (binding [*out* *err*]
-           (clojure.pprint/print-table [name :value] table))))))
+           (print name)
+           (clojure.pprint/print-table [:stat :value] table))))))
 
 (defmacro profile
   "Execute body in a new profile session using `options` and print
