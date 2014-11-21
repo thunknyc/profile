@@ -1,12 +1,12 @@
 # profile
 
-A Clojure library for profiling.
+A library for profiling Clojure code, particularly useful for profiling non-pure code.
 
 ## Usage
 
 This library is available on
-[Clojars](https://clojars.org/thunknyc/profile); here is the Leiningen
-dependency for the most recently released version:
+[Clojars](https://clojars.org/thunknyc/profile); the Leiningen
+dependency for the most recently released version is:
 
 ![Clojars Project](http://clojars.org/thunknyc/profile/latest-version.svg)
 
@@ -18,8 +18,11 @@ MELPA as [`cider-profile`](http://melpa.org/#/cider-profile).
 
 ## Introduction
 
-The goal of this project is to work toward integration into CIDER, the
-Clojure IDE for Emacs. The stats collected are the as follows:
+The goal of this project is to build a profiling tool that can be used
+on non-pure (and pure) code, particularly code that interacts with 
+external systems where the function calls may not be idempotent or 
+repeatable. Profile is being built with the plan of integration into CIDER, the
+Clojure IDE for Emacs. The stats collected are:
 
 * `:n` Number of samples.
 * `:sum` Aggregate time spent in fn.
@@ -35,7 +38,7 @@ Full [API documentation](http://thunknyc.github.io/profile/) is available.
 
 After writing `profile`, I was puttering around CrossClj, I came
 across Stuart Sierra's circa 2009 `core.contrib.profile` library. He
-made some different decisions than I did in his implementation,
+made some different decisions in his implementation than I did,
 notably:
 
 * Sierra's library is written to reduce to a nop unless an earmuffed
@@ -55,13 +58,13 @@ intended to be used interactively in an IDE. Also, its API is modelled
 on `clojure.org/tools.trace`, which focuses on tracing (and
 un-tracing) vars.
 
-People have mentioned Criterium. Criterium looks great! Definitely use
+People have mentioned Criterium. Criterium is great! Definitely use
 it if it works for you. That said, it doesn't work well for
 non-idempotent, non-referentially transparent profiling. I wrote this
 library primarily to assist in understanding the performance
 characteristics of code that is highly dependent on interactions
 outside the JVM, for example due to HTTP requests, database queries,
-sending pub-sub messages, things like those.
+sending pub-sub messages, e.t.c.
 
 ## Example
 
